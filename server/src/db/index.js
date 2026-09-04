@@ -109,7 +109,26 @@ function executeMemoryQuery(text, params) {
     return { rowCount: 1 };
   }
 
-  // 2. Watchlist queries
+  // 2. Watchlist queries (order matters: specific patterns first!)
+
+  if (sql.includes('select count(*)') && sql.includes('from watchlist_items where user_id =')) {
+    const userId = params[0];
+    const count = Array.from(memoryStore.watchlist.values())
+      .filter(item => item.user_id === userId).length;
+    return { rows: [{ count }] };
+  }
+
+  if (sql.includes('select distinct symbol from watchlist_items')) {
+    const symbols = Array.from(new Set(Array.from(memoryStore.watchlist.values()).map(i => i.symbol)));
+    return { rows: symbols.map(s => ({ symbol: s })) };
+  }
+
+  if (sql.includes('delete from watchlist_items') && sql.includes('where user_id =') && sql.includes('symbol =')) {
+    const [userId, symbol] = params;
+    const deleted = memoryStore.watchlist.delete(`${userId}:${symbol.toUpperCase()}`);
+    return { rowCount: deleted ? 1 : 0 };
+  }
+
   if (sql.includes('select') && sql.includes('from watchlist_items') && sql.includes('where user_id =')) {
     const userId = params[0];
     const items = Array.from(memoryStore.watchlist.values())
@@ -132,22 +151,8 @@ function executeMemoryQuery(text, params) {
     return { rows: [item] };
   }
 
-  if (sql.includes('delete from watchlist_items') && sql.includes('where user_id =') && sql.includes('symbol =')) {
-    const [userId, symbol] = params;
-    const deleted = memoryStore.watchlist.delete(`${userId}:${symbol.toUpperCase()}`);
-    return { rowCount: deleted ? 1 : 0 };
-  }
-
-  if (sql.includes('select count(*)') && sql.includes('from watchlist_items where user_id =')) {
-    const userId = params[0];
-    const count = Array.from(memoryStore.watchlist.values())
-      .filter(item => item.user_id === userId).length;
-    return { rows: [{ count }] };
-  }
-
-  if (sql.includes('select distinct symbol from watchlist_items')) {
-    const symbols = Array.from(new Set(Array.from(memoryStore.watchlist.values()).map(i => i.symbol)));
-    return { rows: symbols.map(s => ({ symbol: s })) };
+  if (sql.includes('update watchlist_items set position')) {
+    return { rowCount: 1 };
   }
 
   // 3. Snapshots
