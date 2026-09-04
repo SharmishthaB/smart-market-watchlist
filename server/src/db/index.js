@@ -129,6 +129,12 @@ function executeMemoryQuery(text, params) {
     return { rowCount: deleted ? 1 : 0 };
   }
 
+  if (sql.includes('select') && sql.includes('from watchlist_items') && sql.includes('where user_id =') && sql.includes('symbol =')) {
+    const [userId, symbol] = params;
+    const item = memoryStore.watchlist.get(`${userId}:${symbol.toUpperCase()}`);
+    return { rows: item ? [item] : [] };
+  }
+
   if (sql.includes('select') && sql.includes('from watchlist_items') && sql.includes('where user_id =')) {
     const userId = params[0];
     const items = Array.from(memoryStore.watchlist.values())
@@ -152,6 +158,11 @@ function executeMemoryQuery(text, params) {
   }
 
   if (sql.includes('update watchlist_items set position')) {
+    const [position, userId, symbol] = params;
+    const item = memoryStore.watchlist.get(`${userId}:${symbol.toUpperCase()}`);
+    if (item) {
+      item.position = position;
+    }
     return { rowCount: 1 };
   }
 
