@@ -5,7 +5,7 @@ const db = require('../db');
  * Captures and retrieves frozen points-in-time of a user's watchlist state.
  */
 
-async function captureSnapshot(userId, watchlistItems = []) {
+async function captureSnapshot(userId, watchlistItems = [], customTimestamp = null) {
   if (!userId) throw new Error('User ID is required for snapshot');
 
   const snapshotData = {};
@@ -20,13 +20,13 @@ async function captureSnapshot(userId, watchlistItems = []) {
       avg_volume: Number(item.avg_volume) || 0,
       attention_score: Number(item.attention_score) || 0,
       urgency: item.urgency || 'minor',
-      captured_at: new Date().toISOString()
+      captured_at: customTimestamp || new Date().toISOString()
     };
   }
 
   const result = await db.query(
     'INSERT INTO snapshots (user_id, data) VALUES ($1, $2) RETURNING id, user_id, captured_at, data',
-    [userId, JSON.stringify(snapshotData)]
+    [userId, JSON.stringify(snapshotData), customTimestamp || new Date().toISOString()]
   );
 
   // Prune older snapshots asynchronously to keep DB clean

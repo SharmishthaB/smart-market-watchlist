@@ -77,6 +77,17 @@ export default function App() {
     }
   };
 
+
+  const handleSimulateAway = async () => {
+    try {
+      await api.simulateAwayDigest();
+      await loadData();
+      setBannerMessage("Simulated 3-hour away session! Check out the While You Were Away digest below.");
+      setTimeout(() => setBannerMessage(""), 5000);
+    } catch (err) {
+      console.warn("Failed to simulate away digest:", err);
+    }
+  };
   const handleTakeSnapshot = async () => {
     try {
       await api.createSnapshotCheckpoint();
@@ -110,6 +121,7 @@ export default function App() {
         marketStatus={marketStatus}
         polling={polling}
         onTakeSnapshot={handleTakeSnapshot}
+        onSimulateAway={handleSimulateAway}
       />
 
       {/* Main Container */}

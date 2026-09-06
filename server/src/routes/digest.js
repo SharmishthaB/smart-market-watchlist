@@ -28,4 +28,16 @@ router.post('/snapshot', async (req, res, next) => {
   }
 });
 
+
+// POST /api/digest/simulate (simulate a 3h away session)
+router.post('/simulate', async (req, res, next) => {
+  try {
+    const watchlistData = await watchlistService.getUserWatchlist(req.user.id);
+    const result = await digestService.simulateAwaySession(req.user.id, watchlistData.items);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

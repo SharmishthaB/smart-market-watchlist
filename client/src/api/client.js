@@ -49,5 +49,6 @@ export const api = {
 
   // Digest & Snapshots
   dismissDigest: () => request('/digest/dismiss', { method: 'POST' }),
-  createSnapshotCheckpoint: () => request('/digest/snapshot', { method: 'POST' })
+  createSnapshotCheckpoint: () => request('/digest/snapshot', { method: 'POST' }),
+  simulateAwayDigest: () => request('/digest/simulate', { method: 'POST' })
 };

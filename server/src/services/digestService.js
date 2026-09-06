@@ -187,8 +187,83 @@ async function dismissDigest(userId, currentWatchlistItems = []) {
   };
 }
 
+
+/**
+ * Simulate an away session from 3 hours ago with realistic price & score changes
+ */
+async function simulateAwaySession(userId, currentWatchlistItems = []) {
+  if (!currentWatchlistItems || currentWatchlistItems.length === 0) {
+    return { success: false, message: 'No items in watchlist to simulate' };
+  }
+
+  const threeHoursAgo = new Date(Date.now() - 3.25 * 3600 * 1000).toISOString();
+  const simulatedData = {};
+
+  currentWatchlistItems.forEach((item, index) => {
+    const currentPrice = Number(item.price) || 100;
+    const currentScore = Number(item.attention_score) || 40;
+    const currentVol = Number(item.volume) || 10000000;
+
+    let priceMultiplier = 1.0;
+    let scoreOffset = 0;
+    let volMultiplier = 1.0;
+
+    if (index === 0) {
+      // Top mover: Urgent (+5.8% move, 2.5x volume surge, +28 score spike)
+      priceMultiplier = 0.945;
+      scoreOffset = -28;
+      volMultiplier = 0.4;
+    } else if (index === 1) {
+      // Second mover: Notable (+3.2% move, score gain)
+      priceMultiplier = 0.969;
+      scoreOffset = -16;
+      volMultiplier = 0.6;
+    } else if (index === 2) {
+      // Third mover: Notable (+1.9% shift)
+      priceMultiplier = 0.981;
+      scoreOffset = -12;
+      volMultiplier = 0.8;
+    } else {
+      // Steady
+      priceMultiplier = 0.998;
+      scoreOffset = -2;
+      volMultiplier = 0.95;
+    }
+
+    const oldPrice = Number((currentPrice * priceMultiplier).toFixed(2));
+    const oldScore = Math.max(5, currentScore + scoreOffset);
+    const oldVol = Math.floor(currentVol * volMultiplier);
+
+    simulatedData[item.symbol] = {
+      symbol: item.symbol,
+      name: item.name || item.symbol,
+      price: oldPrice,
+      prev_close: oldPrice,
+      change_pct: 0,
+      volume: oldVol,
+      avg_volume: Number(item.avgVolume || item.avg_volume || currentVol),
+      attention_score: oldScore,
+      urgency: 'minor',
+      captured_at: threeHoursAgo
+    };
+  });
+
+  const db = require('../db');
+  await db.query(
+    'INSERT INTO snapshots (user_id, data, captured_at) VALUES (, , )',
+    [userId, JSON.stringify(simulatedData), threeHoursAgo]
+  );
+
+  return {
+    success: true,
+    message: 'Simulated 3-hour away session generated',
+    snapshotAt: threeHoursAgo
+  };
+}
+
 module.exports = {
   buildDigest,
   dismissDigest,
+  simulateAwaySession,
   formatDuration
 };

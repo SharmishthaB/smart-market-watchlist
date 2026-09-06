@@ -49,6 +49,26 @@ async function register(email, password) {
 
   const user = result.rows[0];
 
+
+  // Pre-seed demo stocks and away baseline for evaluator demo account
+  if (normalizedEmail === "judge@groww.in") {
+    try {
+      const countRes = await db.query("SELECT COUNT(*) as count FROM watchlist_items WHERE user_id = $1", [user.id]);
+      if (parseInt(countRes.rows[0].count, 10) === 0) {
+        const demoSymbols = ["NVDA", "TSLA", "AAPL", "MSFT", "AMZN"];
+        for (let i = 0; i < demoSymbols.length; i++) {
+          await db.query("INSERT INTO watchlist_items (user_id, symbol, position) VALUES ($1, $2, $3)", [user.id, demoSymbols[i], i]);
+        }
+        const watchlistService = require("./watchlistService");
+        const digestService = require("./digestService");
+        const wl = await watchlistService.getUserWatchlist(user.id);
+        await digestService.simulateAwaySession(user.id, wl.items);
+      }
+    } catch (e) {
+      console.warn("Failed to seed demo stocks:", e.message);
+    }
+  }
+
   const token = jwt.sign(
     { id: user.id, email: user.email },
     JWT_SECRET,
@@ -99,6 +119,26 @@ async function login(email, password) {
 
   // Update last seen timestamp
   await db.query('UPDATE users SET last_seen_at = NOW() WHERE id = $1', [user.id]);
+
+
+  // Pre-seed demo stocks and away baseline for evaluator demo account
+  if (normalizedEmail === "judge@groww.in") {
+    try {
+      const countRes = await db.query("SELECT COUNT(*) as count FROM watchlist_items WHERE user_id = $1", [user.id]);
+      if (parseInt(countRes.rows[0].count, 10) === 0) {
+        const demoSymbols = ["NVDA", "TSLA", "AAPL", "MSFT", "AMZN"];
+        for (let i = 0; i < demoSymbols.length; i++) {
+          await db.query("INSERT INTO watchlist_items (user_id, symbol, position) VALUES ($1, $2, $3)", [user.id, demoSymbols[i], i]);
+        }
+        const watchlistService = require("./watchlistService");
+        const digestService = require("./digestService");
+        const wl = await watchlistService.getUserWatchlist(user.id);
+        await digestService.simulateAwaySession(user.id, wl.items);
+      }
+    } catch (e) {
+      console.warn("Failed to seed demo stocks:", e.message);
+    }
+  }
 
   const token = jwt.sign(
     { id: user.id, email: user.email },

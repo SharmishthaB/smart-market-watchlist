@@ -177,11 +177,13 @@ function executeMemoryQuery(text, params) {
 
   if (sql.includes('insert into snapshots')) {
     const id = crypto.randomUUID();
-    const [userId, data] = params;
+    const userId = params[0];
+    const data = params[1];
+    const capturedAt = params[2] || new Date().toISOString();
     const snapshot = {
       id,
       user_id: userId,
-      captured_at: new Date().toISOString(),
+      captured_at: capturedAt,
       data: typeof data === 'string' ? JSON.parse(data) : data
     };
     memoryStore.snapshots.set(id, snapshot);

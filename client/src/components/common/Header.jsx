@@ -1,8 +1,8 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { RefreshCw, TrendingUp, Clock, LogOut, ShieldCheck } from 'lucide-react';
+import { RefreshCw, TrendingUp, Clock, LogOut, ShieldCheck, Sparkles } from 'lucide-react';
 
-export function Header({ marketStatus, polling, onTakeSnapshot }) {
+export function Header({ marketStatus, polling, onTakeSnapshot, onSimulateAway }) {
   const { user, logout } = useAuth();
   const isOpen = marketStatus?.isOpen;
   const secondsAgo = polling?.secondsAgo || 0;
@@ -125,6 +125,22 @@ export function Header({ marketStatus, polling, onTakeSnapshot }) {
 
       {/* User Actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <button
+          onClick={onSimulateAway}
+          className="btn btn-secondary"
+          style={{
+            padding: "6px 12px",
+            fontSize: "0.78rem",
+            border: "1px solid rgba(245, 158, 11, 0.4)",
+            color: "var(--accent-amber)",
+            background: "rgba(245, 158, 11, 0.08)"
+          }}
+          title="Simulate a 3-hour away session to demonstrate the While You Were Away digest"
+        >
+          <Sparkles size={14} color="var(--accent-amber)" />
+          Simulate 3h Away
+        </button>
+
         <button
           onClick={onTakeSnapshot}
           className="btn btn-secondary"
