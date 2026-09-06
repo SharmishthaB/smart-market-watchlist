@@ -62,7 +62,11 @@ async function buildDigest(userId, currentWatchlistItems = []) {
     }
 
     const currentPrice = Number(current.price) || 0;
-    const oldPrice = Number(old.price) || 0;
+    let oldPrice = Number(old.price) || 0;
+    const prevC = Number(current.prevClose || current.prev_close);
+    if (oldPrice === currentPrice && prevC && prevC !== currentPrice && timeElapsedMs < 30 * 60 * 1000) {
+      oldPrice = prevC;
+    }
     const priceDelta = Number((currentPrice - oldPrice).toFixed(2));
     const priceDeltaPct = oldPrice > 0 
       ? Number((((currentPrice - oldPrice) / oldPrice) * 100).toFixed(2)) 
@@ -249,10 +253,8 @@ async function simulateAwaySession(userId, currentWatchlistItems = []) {
   });
 
   const db = require('../db');
-  await db.query(
-    'INSERT INTO snapshots (user_id, data, captured_at) VALUES (, , )',
-    [userId, JSON.stringify(simulatedData), threeHoursAgo]
-  );
+  await db.query('DELETE FROM snapshots WHERE user_id = $1', [userId]);
+  await db.query('INSERT INTO snapshots (user_id, data, captured_at) VALUES ($1, $2, $3)', [userId, JSON.stringify(simulatedData), threeHoursAgo]);
 
   return {
     success: true,

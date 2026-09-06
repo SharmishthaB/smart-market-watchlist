@@ -167,6 +167,29 @@ function executeMemoryQuery(text, params) {
   }
 
   // 3. Snapshots
+  if (sql.includes('delete from snapshots') && sql.includes('id not in')) {
+    const userId = params[0];
+    const keepCount = params[1] || 5;
+    const userSnaps = Array.from(memoryStore.snapshots.values())
+      .filter(s => s.user_id === userId)
+      .sort((a, b) => new Date(b.captured_at) - new Date(a.captured_at));
+    const toRemove = userSnaps.slice(keepCount);
+    for (const s of toRemove) {
+      memoryStore.snapshots.delete(s.id);
+    }
+    return { rowCount: toRemove.length };
+  }
+
+  if (sql.includes('delete from snapshots') && sql.includes('where user_id =')) {
+    const userId = params[0];
+    for (const [id, s] of memoryStore.snapshots.entries()) {
+      if (s.user_id === userId) {
+        memoryStore.snapshots.delete(id);
+      }
+    }
+    return { rowCount: 1 };
+  }
+
   if (sql.includes('select') && sql.includes('from snapshots') && sql.includes('order by captured_at desc limit 1')) {
     const userId = params[0];
     const userSnapshots = Array.from(memoryStore.snapshots.values())
